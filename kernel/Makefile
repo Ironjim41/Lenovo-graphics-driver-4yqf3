@@ -140,23 +140,16 @@ targets += timeconst.h
 $(obj)/timeconst.h: $(obj)/hz.bc $(src)/timeconst.bc FORCE
 	$(call if_changed,bc)
 
+ifeq ($(CONFIG_MODULE_SIG),y)
 ###############################################################################
 #
-# Roll all the X.509 certificates that we can find together and pull them into
-# the kernel so that they get loaded into the system trusted keyring during
-# boot.
-#
-# We look in the source root and the build root for all files whose name ends
-# in ".x509".  Unfortunately, this will generate duplicate filenames, so we
-# have make canonicalise the pathnames and then sort them to discard the
-# duplicates.
+# Roll all the X.509 certificates that we can find together and pull
+# them into the kernel.
 #
 ###############################################################################
-ifeq ($(CONFIG_SYSTEM_TRUSTED_KEYRING),y)
 X509_CERTIFICATES-y := $(wildcard *.x509) $(wildcard $(srctree)/*.x509)
 X509_CERTIFICATES-$(CONFIG_MODULE_SIG) += signing_key.x509
-X509_CERTIFICATES := $(sort $(foreach CERT,$(X509_CERTIFICATES-y), \
-				$(or $(realpath $(CERT)),$(CERT))))
+X509_CERTIFICATES := $(sort $(X509_CERTIFICATES-y))
 
 ifeq ($(X509_CERTIFICATES),)
 $(warning *** No X.509 certificates found ***)
@@ -169,11 +162,10 @@ $(shell rm $(obj)/.x509.list)
 endif
 endif
 
-kernel/system_certificates.o: $(obj)/x509_certificate_list
+kernel/modsign_certificate.o: $(obj)/x509_certificate_list
 
 quiet_cmd_x509certs  = CERTS   $@
-      cmd_x509certs  = cat $(X509_CERTIFICATES) /dev/null >$@ $(foreach X509,$(X509_CERTIFICATES),; echo "  - Including cert $(X509)")
-
+      cmd_x509certs  = cat $(X509_CERTIFICATES) /dev/null >$@
 targets += $(obj)/x509_certificate_list
 $(obj)/x509_certificate_list: $(X509_CERTIFICATES) $(obj)/.x509.list
 	$(call if_changed,x509certs)
@@ -183,9 +175,7 @@ $(obj)/.x509.list:
 	@echo $(X509_CERTIFICATES) >$@
 
 clean-files := x509_certificate_list .x509.list
-endif
 
-ifeq ($(CONFIG_MODULE_SIG),y)
 ###############################################################################
 #
 # If module signing is requested, say by allyesconfig, but a key has not been
