@@ -2801,7 +2801,7 @@ static void *def_codec_mbhc_cal(void)
 	btn_low[2] = 210;
 	btn_high[2] = 360;
 	btn_low[3] = 361;
-	btn_high[3] = 650;
+	btn_high[3] = 722;
 	btn_low[4] = 149;
 	btn_high[4] = 189;
 	btn_low[5] = 190;
