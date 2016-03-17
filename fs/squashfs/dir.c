@@ -206,6 +206,9 @@ static int squashfs_readdir(struct file *file, struct dir_context *ctx)
 				((short) le16_to_cpu(dire->inode_number));
 			type = le16_to_cpu(dire->type);
 
+			if (type > SQUASHFS_MAX_DIR_TYPE)
+				goto failed_read;
+
 			if (!dir_emit(ctx, dire->name, size,
 					inode_number,
 					squashfs_filetype_table[type]))
